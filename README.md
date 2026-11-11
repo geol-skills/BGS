@@ -1,10 +1,9 @@
 # BGS
 
-What rock is under my feet? 'BGS' reports the bedrock and superficial
-deposits that the British Geological Survey maps at any point in the UK or on
-its continental shelf. Give it latitude and longitude, British National Grid
-coordinates, or an Ordnance Survey grid reference. The maps are built in, so
-you need no GIS software and no internet connection.
+Reports the bedrock and superficial deposits that the British Geological Survey
+maps at any point in the UK or on its continental shelf.
+Provide latitude and longitude, British National Grid coordinates, or an Ordnance
+Survey grid reference.
 
 ## Install
 
