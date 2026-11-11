@@ -59,7 +59,7 @@ Bedrock(54.7733, -1.5762)
 Superficial(easting = 427400, northing = 542200)
 
 # Dogger Bank
-Seabed(gridRef = "TA 9 9")[, c("unit", "rock", "folk")]
+Seabed(55, 2.5)[, c("unit", "rock", "folk")]
 }
 \references{
 Folk, R. L. (1954). The distinction between grain size and mineral

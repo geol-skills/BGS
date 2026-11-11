@@ -4,23 +4,27 @@ test_that("lookups agree whichever way a point is given", {
   expect_equal(byLatLong$lex, "PSMCM")
   expect_equal(byLatLong$maxPeriod, "CARBONIFEROUS")
   expect_equal(byLatLong$maxAge, 313.5)
-  byGrid <- Bedrock(easting = 427400, northing = 542200)
-  expect_equal(byGrid[, -(1:2)], byLatLong[, -(1:2)])
-  expect_equal(Bedrock(gridRef = "NZ 274 422")[, -(1:2)], byLatLong[, -(1:2)])
+  bng <- LatLongToBNG(54.7733, -1.5762)
+  expect_equal(Bedrock(easting = bng$easting, northing = bng$northing),
+               byLatLong)
+  centre <- GridRefToBNG("NZ 274 422")
+  expect_equal(Bedrock(gridRef = "NZ 274 422"),
+               Bedrock(easting = centre$easting, northing = centre$northing))
 })
 
 test_that("each map reports its own units", {
-  places <- c("TV 58 95", "NZ 274 422", "TA 9 9")
-  bed <- Bedrock(gridRef = places)
+  # South Downs, Durham, Dogger Bank
+  lat <- c(50.745, 54.7733, 55)
+  long <- c(0.22, -1.5762, 2.5)
+  bed <- Bedrock(lat, long)
   expect_equal(bed$rock[1], "CHALK")
   expect_match(bed$rock[2], "COAL")
   expect_true(is.na(bed$unit[3]))
 
-  sup <- Superficial(gridRef = places)
-  expect_equal(sup$unit[2], "TILL")
-  expect_true(all(is.na(sup$maxAge)))
+  expect_equal(Superficial(gridRef = "NZ 274 422")$unit, "TILL")
+  expect_true(all(is.na(Superficial(lat, long)$maxAge)))
 
-  sea <- Seabed(gridRef = places)
+  sea <- Seabed(lat, long)
   expect_true(is.na(sea$unit[2]))
   expect_equal(sea$folk[3], "S")
   expect_named(sea, c("easting", "northing", "lex", "unit", "rcs", "rock",

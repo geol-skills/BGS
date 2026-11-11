@@ -31,13 +31,14 @@ cat("Round trip: max error", signif(max(abs(c(
 # unrounded polygons
 Compare <- function(v, Fun, fields, n = 1e5) {
   e <- ext(v)
-  pts <- data.frame(
-    easting = runif(n, e$xmin, e$xmax),
-    northing = runif(n, e$ymin, e$ymax)
-  )
-  ours <- Fun(easting = pts$easting, northing = pts$northing)
-  hit <- extract(v, vect(pts, geom = c("easting", "northing"),
-                         crs = crs(v)))
+  pts <- data.frame(x = runif(n, e$xmin, e$xmax), y = runif(n, e$ymin, e$ymax))
+  ours <- if (is.lonlat(v)) {
+    Fun(lat = pts$y, long = pts$x)
+  } else {
+    Fun(easting = pts$x, northing = pts$y)
+  }
+  where <- vect(pts, geom = c("x", "y"), crs = crs(v))
+  hit <- extract(v, where)
   hit <- hit[!duplicated(hit$id.y), ]
   theirs <- do.call(paste, lapply(fields, function(f) trimws(hit[[f]])))
   theirs[is.na(hit[[fields[1]]])] <- NA
@@ -49,8 +50,7 @@ Compare <- function(v, Fun, fields, n = 1e5) {
       " points differ", sep = "")
   if (length(differ)) {
     edges <- as.lines(v)
-    near <- distance(vect(pts[differ, ], geom = c("easting", "northing"),
-                          crs = crs(v)), edges)
+    near <- distance(where[differ], edges)
     cat("; furthest from a boundary:", signif(max(apply(near, 1, min)), 3),
         "m")
   }
@@ -61,4 +61,5 @@ Compare(vect(onshore, layer = "625k_V5_BEDROCK_Geology"), Bedrock,
         c("LEX", "RCS"))
 Compare(vect(onshore, layer = "625k_V5_SUPERFICIAL_Geology"), Superficial,
         c("LEX", "ROCK"))
-Compare(project(vect(seabedFile), "EPSG:27700"), Seabed, c("LEX", "RCS"))
+# In WGS 84, as published: also tests LatLongToBNG() across the whole shelf
+Compare(vect(seabedFile), Seabed, c("LEX", "RCS"))

@@ -18,6 +18,9 @@
 # be grouped into polygons.
 
 library("terra")
+# The package's own conversion, so that stored and queried coordinates match:
+# beyond the OSTN15 grid, PROJ's WGS 84 to OSGB36 omits the datum shift
+source(file.path("R", "coordinates.R"))
 
 resolution <- 5 # metres; 0.02 mm at 1:250 000
 
@@ -72,13 +75,18 @@ Blank <- function(x) {
   x
 }
 
-Encode <- function(v, units, source) {
+Encode <- function(v, units, source, latLong = FALSE) {
   key <- do.call(paste, units)
   unitTable <- units[!duplicated(key), , drop = FALSE]
   rownames(unitTable) <- NULL
   polyUnit <- match(key, key[!duplicated(key)])
 
   g <- geom(v)
+  if (latLong) {
+    bng <- LatLongToBNG(g[, "y"], g[, "x"])
+    g[, "x"] <- bng[["easting"]]
+    g[, "y"] <- bng[["northing"]]
+  }
   x <- as.integer(round(g[, "x"] / resolution))
   y <- as.integer(round(g[, "y"] / resolution))
   n <- nrow(g)
@@ -175,7 +183,10 @@ saveRDS(
   file.path(out, "superficial.rds"), compress = "xz"
 )
 
-sea <- project(vect(seabedFile), "EPSG:27700")
+# Edges are straight in latitude and longitude (as GIS draws them), but some
+# run for tens of kilometres: add vertices so that they stay within a metre
+# of that line once projected
+sea <- densify(vect(seabedFile), interval = 0.005, flat = TRUE)
 seaUnits <- data.frame(
   lex = Blank(sea$LEX),
   unit = Blank(sea$LEX_D),
@@ -195,7 +206,7 @@ saveRDS(
     scale = 250000,
     licence = ogl,
     url = "https://www.bgs.ac.uk/datasets/seabed-sediments-250k/"
-  )),
+  ), latLong = TRUE),
   file.path(out, "seabed.rds"), compress = "xz"
 )
 

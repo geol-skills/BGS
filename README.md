@@ -32,7 +32,7 @@ Superficial(easting = 427400, northing = 542200)
 Bedrock(gridRef = "NZ 274 422")
 
 # Dogger Bank
-Seabed(gridRef = "TA 9 9")
+Seabed(55, 2.5)
 ```
 
 Each function returns a data frame with one row per point: the mapped unit,

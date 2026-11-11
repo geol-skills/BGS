@@ -41,7 +41,7 @@
 #' Superficial(easting = 427400, northing = 542200)
 #'
 #' # Dogger Bank
-#' Seabed(gridRef = "TA 9 9")[, c("unit", "rock", "folk")]
+#' Seabed(55, 2.5)[, c("unit", "rock", "folk")]
 #' @seealso [BGSSources()] for the maps' versions and licence.
 #' @export
 Bedrock <- function(lat, long, easting, northing, gridRef) {
