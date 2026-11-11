@@ -6,7 +6,7 @@
 \alias{BGS-package}
 \title{BGS: British Geology at a Point}
 \description{
-Reports the bedrock, superficial deposits and seabed sediments mapped by the British Geological Survey at given points, located by latitude and longitude, British National Grid coordinates or Ordnance Survey grid references. Contains the 1:625 000 onshore geological map and the 1:250 000 seabed sediment map of the UK, released under the Open Government Licence, so needs neither GIS software nor an internet connection. Not affiliated with or endorsed by the British Geological Survey.
+Reports the bedrock and superficial deposits mapped by the British Geological Survey at given points on land or at sea, located by latitude and longitude, British National Grid coordinates or Ordnance Survey grid references. Contains the 1:625 000 geological map of the UK and the 1:250 000 bedrock and seabed sediment maps of its continental shelf, released under the Open Government Licence, so needs neither GIS software nor an internet connection. Not affiliated with or endorsed by the British Geological Survey.
 }
 \details{
 Contains British Geological Survey materials © UKRI, released under the

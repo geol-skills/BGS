@@ -1,19 +1,19 @@
 #' Geology at a point
 #'
-#' `Bedrock()`, `Superficial()` and `Seabed()` report the bedrock, superficial
-#' deposits and seabed sediments mapped by the British Geological Survey at
-#' each point.
+#' `Bedrock()` and `Superficial()` report the bedrock and the superficial
+#' deposits mapped by the British Geological Survey at each point, on land or
+#' under the sea.
 #'
 #' Locate points by latitude and longitude, by British National Grid
 #' coordinates, or by Ordnance Survey grid references.
 #'
-#' Bedrock and superficial deposits come from the 1:625 000 geological map of
-#' the UK (onshore only); seabed sediments, from the 1:250 000 map of the UK
-#' continental shelf. At these scales a boundary may be hundreds of metres from
-#' its true position, so treat results near a boundary with caution.
-#' `NA` means that nothing is mapped at that point: the sea, for `Bedrock()`;
-#' ground without mapped superficial deposits, for `Superficial()`; land, or
-#' sea beyond the map, for `Seabed()`.
+#' On land, both functions read the 1:625 000 geological map of the UK; at
+#' sea (anywhere off that map), the 1:250 000 maps of the UK continental shelf,
+#' whose superficial deposits are seabed sediments.
+#' At these scales a boundary may lie hundreds of metres from its true
+#' position, so treat results near a boundary, or the coast, with caution.
+#' `NA` means that nothing is mapped at that point: beyond the shelf maps, or,
+#' for `Superficial()`, ground without mapped superficial deposits.
 #'
 #' @inheritParams LatLongToBNG
 #' @param gridRef Character vector of Ordnance Survey grid references, such as
@@ -26,9 +26,10 @@
 #' - `rcs`, `rock`: code and description of its rock type;
 #' - `maxPeriod`, `minPeriod`: oldest and youngest geological period it spans;
 #' - `maxAge`, `minAge`: oldest and youngest age it spans, in millions of
-#'   years (`NA` for superficial deposits);
-#' - `folk` (`Seabed()` only): sediment class of Folk (1954), such as `"gmS"`
-#'   for gravelly muddy sand.
+#'   years (`NA` for superficial deposits on land);
+#' - `folk` (`Superficial()` only): sediment class of Folk (1954), such as
+#'   `"gmS"` for gravelly muddy sand, for seabed sediments;
+#' - `scale`: scale of the map that gave the result.
 #'
 #' @references
 #' Folk, R. L. (1954). The distinction between grain size and mineral
@@ -39,25 +40,20 @@
 #' # Durham Cathedral
 #' Bedrock(54.7733, -1.5762)
 #' Superficial(easting = 427400, northing = 542200)
+#' Bedrock(gridRef = "NZ 274 422")
 #'
 #' # Dogger Bank
-#' Seabed(55, 2.5)[, c("unit", "rock", "folk")]
+#' Superficial(55, 2.5)[, c("unit", "rock", "folk")]
 #' @seealso [BGSSources()] for the maps' versions and licence.
 #' @export
 Bedrock <- function(lat, long, easting, northing, gridRef) {
-  .Lookup("bedrock", .Locate(lat, long, easting, northing, gridRef))
+  .Geology(.Locate(lat, long, easting, northing, gridRef), "bedrock")
 }
 
 #' @rdname Bedrock
 #' @export
 Superficial <- function(lat, long, easting, northing, gridRef) {
-  .Lookup("superficial", .Locate(lat, long, easting, northing, gridRef))
-}
-
-#' @rdname Bedrock
-#' @export
-Seabed <- function(lat, long, easting, northing, gridRef) {
-  .Lookup("seabed", .Locate(lat, long, easting, northing, gridRef))
+  .Geology(.Locate(lat, long, easting, northing, gridRef), "superficial")
 }
 
 #' Map sources
@@ -70,25 +66,27 @@ Seabed <- function(lat, long, easting, northing, gridRef) {
 #' https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 #'
 #' @return A data frame with one row per map, giving the function that reads
-#' it, its title, version, release date, scale, licence and web page.
+#' it, where it applies, and the map's title, version, release date, scale,
+#' licence and web page.
 #' @examples
 #' BGSSources()
 #' @export
 BGSSources <- function() {
-  layers <- c(Bedrock = "bedrock", Superficial = "superficial",
-              Seabed = "seabed")
-  sources <- lapply(layers, function(name) {
-    src <- .Layer(name)[["source"]]
-    data.frame(
-      title = src[["title"]],
-      version = src[["version"]],
-      released = src[["released"]],
-      scale = src[["scale"]],
-      licence = src[["licence"]],
-      url = src[["url"]]
-    )
+  maps <- expand.grid(
+    covers = c("land", "sea"), layer = c("bedrock", "superficial"),
+    stringsAsFactors = FALSE
+  )
+  sources <- lapply(paste0(maps$layer, "-", maps$covers), function(name) {
+    as.data.frame(.Map(name)[["source"]])
   })
-  cbind(`function` = names(layers), do.call(rbind, unname(sources)))
+  cbind(
+    `function` = c(bedrock = "Bedrock", superficial = "Superficial")[
+      maps$layer
+    ],
+    covers = maps$covers,
+    do.call(rbind, sources),
+    row.names = NULL
+  )
 }
 
 .Locate <- function(lat, long, easting, northing, gridRef) {
@@ -110,7 +108,7 @@ BGSSources <- function() {
     latLong = {
       bng <- LatLongToBNG(lat, long)
       if (length(lat) && all(
-        lat < 48 | lat > 64 | long < -14 | long > 5, na.rm = TRUE
+        lat < 48 | lat > 64 | long < -16 | long > 5, na.rm = TRUE
       )) {
         warning(
           "No point lies near the UK: are `lat` and `long` the right way ",
@@ -127,69 +125,81 @@ BGSSources <- function() {
   )
 }
 
-.Lookup <- function(layer, bng) {
-  index <- .Layer(layer)
-  res <- index[["resolution"]]
-  unit <- .Find(bng[["easting"]] / res, bng[["northing"]] / res, index)
-  units <- index[["units"]][unit, , drop = FALSE]
+# Land is wherever the onshore bedrock map has a unit; elsewhere, use the
+# offshore map.
+.Geology <- function(bng, layer) {
+  onshore <- .Find(bng, "bedrock-land")
+  atSea <- is.na(onshore)
+  landName <- paste0(layer, "-land")
+  seaName <- paste0(layer, "-sea")
+  land <- .Map(landName)
+  sea <- .Map(seaName)
+  landUnit <- if (layer == "bedrock") onshore else .Find(bng, landName)
+  seaUnit <- .Find(bng[atSea, , drop = FALSE], seaName)
+  row <- landUnit
+  row[atSea] <- nrow(land[["units"]]) + seaUnit
+  scale <- ifelse(atSea, sea[["source"]][["scale"]],
+                  land[["source"]][["scale"]])
+  scale[is.na(row)] <- NA
+  units <- rbind(land[["units"]], sea[["units"]])[row, , drop = FALSE]
   rownames(units) <- NULL
-  cbind(bng, units)
+  cbind(bng, units, scale = scale)
 }
 
-.layers <- new.env(parent = emptyenv())
+.maps <- new.env(parent = emptyenv())
 
-.Layer <- function(name) {
-  if (is.null(.layers[[name]])) {
+.Map <- function(name) {
+  if (is.null(.maps[[name]])) {
     file <- system.file("extdata", paste0(name, ".rds"), package = "BGS")
-    .layers[[name]] <- .Index(readRDS(file))
+    .maps[[name]] <- .Index(readRDS(file))
   }
-  .layers[[name]]
+  .maps[[name]]
 }
 
-# Rows of the band index, in units of the layer's resolution
-.bandHeight <- 400L
+# Rows of the band index, in units of the map's resolution
+.bandHeight <- 200L
 
 # Index each edge by every horizontal band its y-range touches, so that a ray
 # cast east from a point need only test the edges in that point's band.
-.Index <- function(layer) {
-  x <- cumsum(layer[["dx"]])
-  y <- cumsum(layer[["dy"]])
-  ringEnd <- cumsum(layer[["ringLength"]])
+.Index <- function(map) {
+  x <- cumsum(map[["dx"]])
+  y <- cumsum(map[["dy"]])
+  ringEnd <- cumsum(map[["ringLength"]])
   nxt <- seq_along(x) + 1L
-  nxt[ringEnd] <- ringEnd - layer[["ringLength"]] + 1L
+  nxt[ringEnd] <- ringEnd - map[["ringLength"]] + 1L
   lo <- pmin(y, y[nxt]) %/% .bandHeight
   hi <- pmax(y, y[nxt]) %/% .bandHeight
   bandMin <- min(lo)
   copies <- hi - lo + 1L
   band <- sequence(copies, from = lo - bandMin + 1L)
-  edges <- rep.int(seq_along(x), copies)[order(band)]
-  list(
-    x = x, y = y, nxt = nxt,
-    unit = rep.int(layer[["ringUnit"]], layer[["ringLength"]]),
-    edges = edges,
+  unit <- rep.int(map[["ringUnit"]], map[["ringLength"]])
+  map[c("dx", "dy", "ringLength", "ringUnit")] <- NULL
+  c(map, list(
+    x = x, y = y, nxt = nxt, unit = unit,
+    edges = rep.int(seq_along(x), copies)[order(band)],
     bandEnd = cumsum(tabulate(band)),
-    bandMin = bandMin,
-    units = layer[["units"]],
-    resolution = layer[["resolution"]],
-    source = layer[["source"]]
-  )
+    bandMin = bandMin
+  ))
 }
 
-# Index of the unit containing each point (px, py), by the even-odd rule
-.Find <- function(px, py, index) {
-  nUnit <- nrow(index[["units"]])
-  bandEnd <- index[["bandEnd"]]
-  x <- index[["x"]]
-  y <- index[["y"]]
-  band <- py %/% .bandHeight - index[["bandMin"]] + 1L
+# Row of the map's `units` containing each point, by the even-odd rule
+.Find <- function(bng, name) {
+  map <- .Map(name)
+  px <- bng[["easting"]] / map[["resolution"]]
+  py <- bng[["northing"]] / map[["resolution"]]
+  nUnit <- nrow(map[["units"]])
+  bandEnd <- map[["bandEnd"]]
+  x <- map[["x"]]
+  y <- map[["y"]]
+  band <- py %/% .bandHeight - map[["bandMin"]] + 1L
   vapply(seq_along(px), function(i) {
     b <- band[i]
     if (is.na(b) || is.na(px[i]) || b < 1L || b > length(bandEnd)) {
       return(NA_integer_)
     }
     from <- if (b == 1L) 1L else bandEnd[b - 1L] + 1L
-    edge <- index[["edges"]][seq.int(from, length.out = bandEnd[b] - from + 1L)]
-    to <- index[["nxt"]][edge]
+    edge <- map[["edges"]][seq.int(from, length.out = bandEnd[b] - from + 1L)]
+    to <- map[["nxt"]][edge]
     y1 <- y[edge]
     y2 <- y[to]
     spans <- (y1 > py[i]) != (y2 > py[i])
@@ -198,7 +208,7 @@ BGSSources <- function() {
     y1 <- y1[spans]
     x1 <- x[edge]
     crossing <- x1 + (py[i] - y1) * (x[to] - x1) / (y2[spans] - y1)
-    odd <- which(tabulate(index[["unit"]][edge[crossing > px[i]]], nUnit) %% 2L
+    odd <- which(tabulate(map[["unit"]][edge[crossing > px[i]]], nUnit) %% 2L
                  == 1L)
     if (length(odd)) odd[1] else NA_integer_
   }, integer(1))

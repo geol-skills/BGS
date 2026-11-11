@@ -6,6 +6,9 @@ The map data in inst/extdata are derived from:
   BGS Geology 625k (DiGMapGB-625), bedrock and superficial deposits,
   version 5. https://www.bgs.ac.uk/datasets/bgs-geology-625k-digmapgb/
 
+  BGS Offshore Bedrock 250k (DiGRock250k), version 3.
+  https://www.bgs.ac.uk/datasets/offshore-bedrock-250k/
+
   BGS Seabed Sediments 250k (DiGSBS250k), version 3.
   https://www.bgs.ac.uk/datasets/seabed-sediments-250k/
 
@@ -13,8 +16,8 @@ Contains British Geological Survey materials (c) UKRI. The data are
 released under the Open Government Licence v3.0:
 https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
 
-The data have been re-encoded: coordinates are rounded to 5 m on the
-British National Grid, the seabed map is reprojected from WGS 84, and only
+The data have been re-encoded: coordinates are rounded to 10 m on the
+British National Grid, the 250k maps are converted from WGS 84, and only
 the attributes that this package reports are kept. data-raw/build-layers.R
 in the source repository records each step.
 

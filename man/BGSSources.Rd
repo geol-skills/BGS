@@ -8,7 +8,8 @@ BGSSources()
 }
 \value{
 A data frame with one row per map, giving the function that reads
-it, its title, version, release date, scale, licence and web page.
+it, where it applies, and the map's title, version, release date, scale,
+licence and web page.
 }
 \description{
 Lists the British Geological Survey maps that this package contains, so

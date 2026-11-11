@@ -1,10 +1,10 @@
 # BGS
 
-What rock is under my feet? 'BGS' reports the bedrock, superficial deposits
-and seabed sediments that the British Geological Survey maps at any point in
-the UK or on its continental shelf. Give it latitude and longitude, British
-National Grid coordinates, or an Ordnance Survey grid reference. The maps
-are built in, so you need no GIS software and no internet connection.
+What rock is under my feet? 'BGS' reports the bedrock and superficial
+deposits that the British Geological Survey maps at any point in the UK or on
+its continental shelf. Give it latitude and longitude, British National Grid
+coordinates, or an Ordnance Survey grid reference. The maps are built in, so
+you need no GIS software and no internet connection.
 
 ## Install
 
@@ -32,24 +32,25 @@ Superficial(easting = 427400, northing = 542200)
 Bedrock(gridRef = "NZ 274 422")
 
 # Dogger Bank
-Seabed(55, 2.5)
+Superficial(55, 2.5)
 ```
 
 Each function returns a data frame with one row per point: the mapped unit,
-its rock type, and the geological periods and ages it spans.
+its rock type, the geological periods and ages it spans, and the scale of the
+map that answered.
 
 ## Data
 
-| Function | Map | Scale |
+| Function | On land | At sea |
 |---|---|---|
-| `Bedrock()` | BGS Geology 625k (DiGMapGB-625), bedrock | 1:625 000 |
-| `Superficial()` | BGS Geology 625k (DiGMapGB-625), superficial deposits | 1:625 000 |
-| `Seabed()` | BGS Seabed Sediments 250k (DiGSBS250k), Folk classes | 1:250 000 |
+| `Bedrock()` | BGS Geology 625k (DiGMapGB-625), bedrock | BGS Offshore Bedrock 250k (DiGRock250k) |
+| `Superficial()` | BGS Geology 625k (DiGMapGB-625), superficial deposits | BGS Seabed Sediments 250k (DiGSBS250k) |
 
+"At sea" means anywhere off the onshore map.
 Contains British Geological Survey materials © UKRI, released under the
 [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 `BGSSources()` gives each map's version. `data-raw/` rebuilds the data from
-the BGS downloads.
+the BGS downloads, and checks the lookups against 'terra'.
 
 This package is not affiliated with or endorsed by the British Geological
 Survey.

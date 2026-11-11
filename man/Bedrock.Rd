@@ -3,14 +3,11 @@
 \name{Bedrock}
 \alias{Bedrock}
 \alias{Superficial}
-\alias{Seabed}
 \title{Geology at a point}
 \usage{
 Bedrock(lat, long, easting, northing, gridRef)
 
 Superficial(lat, long, easting, northing, gridRef)
-
-Seabed(lat, long, easting, northing, gridRef)
 }
 \arguments{
 \item{lat, long}{Numeric vectors giving latitude and longitude in decimal
@@ -31,35 +28,37 @@ A data frame with one row per point, and columns:
 \item \code{rcs}, \code{rock}: code and description of its rock type;
 \item \code{maxPeriod}, \code{minPeriod}: oldest and youngest geological period it spans;
 \item \code{maxAge}, \code{minAge}: oldest and youngest age it spans, in millions of
-years (\code{NA} for superficial deposits);
-\item \code{folk} (\code{Seabed()} only): sediment class of Folk (1954), such as \code{"gmS"}
-for gravelly muddy sand.
+years (\code{NA} for superficial deposits on land);
+\item \code{folk} (\code{Superficial()} only): sediment class of Folk (1954), such as
+\code{"gmS"} for gravelly muddy sand, for seabed sediments;
+\item \code{scale}: scale of the map that gave the result.
 }
 }
 \description{
-\code{Bedrock()}, \code{Superficial()} and \code{Seabed()} report the bedrock, superficial
-deposits and seabed sediments mapped by the British Geological Survey at
-each point.
+\code{Bedrock()} and \code{Superficial()} report the bedrock and the superficial
+deposits mapped by the British Geological Survey at each point, on land or
+under the sea.
 }
 \details{
 Locate points by latitude and longitude, by British National Grid
 coordinates, or by Ordnance Survey grid references.
 
-Bedrock and superficial deposits come from the 1:625 000 geological map of
-the UK (onshore only); seabed sediments, from the 1:250 000 map of the UK
-continental shelf. At these scales a boundary may be hundreds of metres from
-its true position, so treat results near a boundary with caution.
-\code{NA} means that nothing is mapped at that point: the sea, for \code{Bedrock()};
-ground without mapped superficial deposits, for \code{Superficial()}; land, or
-sea beyond the map, for \code{Seabed()}.
+On land, both functions read the 1:625 000 geological map of the UK; at
+sea (anywhere off that map), the 1:250 000 maps of the UK continental shelf,
+whose superficial deposits are seabed sediments.
+At these scales a boundary may lie hundreds of metres from its true
+position, so treat results near a boundary, or the coast, with caution.
+\code{NA} means that nothing is mapped at that point: beyond the shelf maps, or,
+for \code{Superficial()}, ground without mapped superficial deposits.
 }
 \examples{
 # Durham Cathedral
 Bedrock(54.7733, -1.5762)
 Superficial(easting = 427400, northing = 542200)
+Bedrock(gridRef = "NZ 274 422")
 
 # Dogger Bank
-Seabed(55, 2.5)[, c("unit", "rock", "folk")]
+Superficial(55, 2.5)[, c("unit", "rock", "folk")]
 }
 \references{
 Folk, R. L. (1954). The distinction between grain size and mineral
