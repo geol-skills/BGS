@@ -1,0 +1,30 @@
+Package: BGS
+Title: British Geology at a Point
+Version: 0.1.0
+Authors@R:
+    person("Martin R.", "Smith", , "martin.smith@durham.ac.uk", role = c("aut", "cre", "cph"),
+           comment = c(ORCID = "0000-0001-5660-1727"))
+Description: Reports the bedrock, superficial deposits and seabed sediments
+    mapped by the British Geological Survey at given points, located by
+    latitude and longitude, British National Grid coordinates or Ordnance
+    Survey grid references. Contains the 1:625 000 onshore geological map and
+    the 1:250 000 seabed sediment map of the UK, released under the Open
+    Government Licence, so needs neither GIS software nor an internet
+    connection. Not affiliated with or endorsed by the British Geological
+    Survey.
+License: GPL (>= 2)
+Copyright: Map data in 'inst/extdata' (c) UKRI, under the Open Government
+    Licence v3.0; see file 'inst/COPYRIGHTS'.
+URL: https://github.com/geol-skills/BGS
+BugReports: https://github.com/geol-skills/BGS/issues
+Depends:
+    R (>= 4.1)
+Suggests:
+    spelling,
+    testthat (>= 3.0.0)
+Config/Needs/coverage: covr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0

@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^\.lintr$
+^data-raw$
+^README\.Rmd$
+^cran-comments\.md$
+^codemeta\.json$
+^docs$
+^pkgdown$
+^_pkgdown\.yml$
+^\.covrignore$
+^\.gitattributes$
